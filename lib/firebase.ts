@@ -1,18 +1,15 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
-import { getAuth, signInAnonymously, onAuthStateChanged, User, connectAuthEmulator } from 'firebase/auth'
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, orderBy, getDocs, Timestamp, connectFirestoreEmulator } from 'firebase/firestore'
-import { getStorage, ref, uploadBytes, getDownloadURL, connectStorageEmulator } from 'firebase/storage'
+import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/auth'
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore'
 import { getAnalytics, Analytics } from 'firebase/analytics'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDRt8NZn8fpETdkKuo6zfMwNOSSsweYGwE",
-  authDomain: "one-tender.firebaseapp.com",
-  databaseURL: "https://one-tender-default-rtdb.firebaseio.com",
-  projectId: "one-tender",
-  storageBucket: "one-tender.appspot.com",
-  messagingSenderId: "341328188165",
-  appId: "1:341328188165:web:bc81c6516aed06f4b7dd6c",
-  measurementId: "G-TS3V9SSX3C"
+  apiKey: "AIzaSyCMOk0Klaxt62wfxMIL_aZqlBOTk2H1WVE",
+  authDomain: "minimal-blog-qi8s5.firebaseapp.com",
+  projectId: "minimal-blog-qi8s5",
+  storageBucket: "minimal-blog-qi8s5.firebasestorage.app",
+  messagingSenderId: "178489491328",
+  appId: "1:178489491328:web:76ed0aa2e1ef0515fc4b65"
 }
 
 // Initialize Firebase only once
@@ -21,7 +18,6 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
 // Initialize services
 export const auth = getAuth(app)
 export const db = getFirestore(app)
-export const storage = getStorage(app)
 
 // Initialize analytics only on client side
 let analytics: Analytics | null = null
@@ -185,18 +181,6 @@ export const getUserMeals = async (uid: string, date?: Date) => {
   } catch (error) {
     console.error('Error getting user meals:', error)
     return []
-  }
-}
-
-// Storage functions
-export const uploadMealImage = async (uid: string, mealId: string, imageFile: File): Promise<string | null> => {
-  try {
-    const imageRef = ref(storage, `userMeals/${uid}/${mealId}.jpg`)
-    await uploadBytes(imageRef, imageFile)
-    return await getDownloadURL(imageRef)
-  } catch (error) {
-    console.error('Error uploading image:', error)
-    return null
   }
 }
 

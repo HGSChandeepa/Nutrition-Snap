@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
-import { analyzeImage, saveMeal, uploadMealImage, FoodItem, Timestamp } from '@/lib/firebase'
+import { analyzeImage, saveMeal, FoodItem, Timestamp } from '@/lib/firebase'
 import { Camera, Upload, Edit3, Plus, Trash2, Save, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import DashboardLayout from '@/components/dashboard-layout'
+import MealImageUploader from '@/components/meal-image-uploader'
 import { trackMealLogged, trackImageAnalyzed } from '@/lib/analytics'
 
 type Step = 'input-method' | 'analyzing' | 'confirmation'
@@ -19,12 +20,10 @@ export default function LogMeal() {
   const { user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const cameraInputRef = useRef<HTMLInputElement>(null)
   
   const [step, setStep] = useState<Step>('input-method')
-  const [selectedImage, setSelectedImage] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null)
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
   const [analyzedItems, setAnalyzedItems] = useState<FoodItem[]>([])
   const [mealType, setMealType] = useState<'Breakfast' | 'Lunch' | 'Dinner' | 'Snack'>('Breakfast')
   const [notes, setNotes] = useState('')
@@ -33,25 +32,25 @@ export default function LogMeal() {
   // Auto-trigger camera if method=camera in URL
   React.useEffect(() => {
     if (searchParams.get('method') === 'camera') {
-      handleCameraCapture()
+      // Camera will be triggered by the MealImageUploader component
     }
   }, [searchParams])
 
-  const handleImageSelect = (file: File) => {
-    setSelectedImage(file)
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      setImagePreview(e.target?.result as string)
+  const handleImageUploaded = (url: string, file?: File) => {
+    setSelectedImageUrl(url)
+    if (file) {
+      setSelectedImageFile(file)
+      // If it's a local file (blob URL), analyze it immediately
+      if (url.startsWith('blob:')) {
+        analyzeSelectedImage(file)
+      }
     }
-    reader.readAsDataURL(file)
   }
 
-  const handleCameraCapture = () => {
-    cameraInputRef.current?.click()
-  }
-
-  const handleFileUpload = () => {
-    fileInputRef.current?.click()
+  const handleImageRemoved = () => {
+    setSelectedImageUrl(null)
+    setSelectedImageFile(null)
+    setStep('input-method')
   }
 
   const handleManualEntry = () => {
@@ -61,14 +60,15 @@ export default function LogMeal() {
     setStep('confirmation')
   }
 
-  const analyzeSelectedImage = async () => {
-    if (!selectedImage) return
+  const analyzeSelectedImage = async (imageFile?: File) => {
+    const fileToAnalyze = imageFile || selectedImageFile
+    if (!fileToAnalyze) return
 
     setStep('analyzing')
     setLoading(true)
 
     try {
-      const result = await analyzeImage(selectedImage)
+      const result = await analyzeImage(fileToAnalyze)
       if (result.success) {
         setAnalyzedItems(result.items)
         setStep('confirmation')
@@ -110,6 +110,28 @@ export default function LogMeal() {
     )
   }
 
+  const uploadImageToUploadThing = async (file: File): Promise<string | null> => {
+    try {
+      const formData = new FormData()
+      formData.append('files', file)
+
+      const response = await fetch('/api/uploadthing', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error('Upload failed')
+      }
+
+      const result = await response.json()
+      return result[0]?.url || null
+    } catch (error) {
+      console.error('Error uploading to UploadThing:', error)
+      return null
+    }
+  }
+
   const saveMealData = async () => {
     if (!user || analyzedItems.length === 0) return
 
@@ -117,12 +139,15 @@ export default function LogMeal() {
 
     try {
       const totalNutrition = calculateTotalNutrition()
-      const mealId = Date.now().toString()
       
-      let imageUrl = ''
-      if (selectedImage) {
-        const uploadedUrl = await uploadMealImage(user.uid, mealId, selectedImage)
-        imageUrl = uploadedUrl || ''
+      let finalImageUrl = selectedImageUrl
+      
+      // If we have a local file (blob URL), upload it to UploadThing
+      if (selectedImageFile && selectedImageUrl?.startsWith('blob:')) {
+        const uploadedUrl = await uploadImageToUploadThing(selectedImageFile)
+        if (uploadedUrl) {
+          finalImageUrl = uploadedUrl
+        }
       }
 
       const mealData = {
@@ -131,7 +156,7 @@ export default function LogMeal() {
         mealType,
         foodItems: analyzedItems.filter(item => item.name.trim() !== ''),
         totalNutrition,
-        imageUrl,
+        imageUrl: finalImageUrl || '',
         notes: notes.trim()
       }
 
@@ -148,67 +173,25 @@ export default function LogMeal() {
   if (step === 'input-method') {
     return (
       <DashboardLayout title="Log New Meal" subtitle="Choose how you'd like to add your meal">
-        <div className="max-w-2xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleCameraCapture}>
-              <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                  <Camera className="w-8 h-8 text-green-600" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Take Photo</h3>
-                <p className="text-sm text-gray-500">Use your camera to capture your meal</p>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleFileUpload}>
-              <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                  <Upload className="w-8 h-8 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Upload Image</h3>
-                <p className="text-sm text-gray-500">Select a photo from your gallery</p>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleManualEntry}>
-              <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                  <Edit3 className="w-8 h-8 text-purple-600" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Manual Entry</h3>
-                <p className="text-sm text-gray-500">Type in your food items manually</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) {
-                handleImageSelect(file)
-                analyzeSelectedImage()
-              }
-            }}
+        <div className="max-w-2xl mx-auto space-y-6">
+          {/* Image Upload Section */}
+          <MealImageUploader
+            onImageUploaded={handleImageUploaded}
+            onImageRemoved={handleImageRemoved}
+            currentImageUrl={selectedImageUrl}
+            disabled={loading}
           />
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) {
-                handleImageSelect(file)
-                analyzeSelectedImage()
-              }
-            }}
-          />
+          {/* Manual Entry Option */}
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleManualEntry}>
+            <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                <Edit3 className="w-8 h-8 text-purple-600" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Manual Entry</h3>
+              <p className="text-sm text-gray-500">Type in your food items manually</p>
+            </CardContent>
+          </Card>
         </div>
       </DashboardLayout>
     )
@@ -220,10 +203,10 @@ export default function LogMeal() {
         <div className="max-w-2xl mx-auto">
           <Card>
             <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-              {imagePreview && (
+              {selectedImageUrl && (
                 <div className="mb-8">
                   <img
-                    src={imagePreview || "/placeholder.svg"}
+                    src={selectedImageUrl || "/placeholder.svg"}
                     alt="Selected meal"
                     className="w-64 h-64 object-cover rounded-xl shadow-lg"
                   />
@@ -255,14 +238,14 @@ export default function LogMeal() {
           {/* Left Column - Image and Settings */}
           <div className="space-y-6">
             {/* Image Preview */}
-            {imagePreview && (
+            {selectedImageUrl && (
               <Card>
                 <CardHeader>
                   <CardTitle>Meal Photo</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <img
-                    src={imagePreview || "/placeholder.svg"}
+                    src={selectedImageUrl || "/placeholder.svg"}
                     alt="Selected meal"
                     className="w-full h-48 object-cover rounded-lg"
                   />
