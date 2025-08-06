@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { updateUserProfile, createUserProfile, UserProfile, UserGoals } from '@/lib/firebase'
-import { User, Target, Shield, Globe } from 'lucide-react'
+import { User, Target, Shield, Globe, Calculator } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import DashboardLayout from '@/components/dashboard-layout'
 import { trackGoalUpdated, trackProfileUpdated } from '@/lib/analytics'
 
 export default function Settings() {
@@ -85,16 +86,8 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-md mx-auto px-4 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">Settings & Profile</h1>
-          <p className="text-gray-600 mt-1">Manage your personal information and goals</p>
-        </div>
-      </div>
-
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+    <DashboardLayout title="Settings & Profile" subtitle="Manage your personal information and nutrition goals">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Profile Information */}
         <Card>
           <CardHeader>
@@ -106,53 +99,55 @@ export default function Settings() {
               This information helps us calculate your nutritional needs
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="age">Age</Label>
-                <Input
-                  id="age"
-                  type="number"
-                  value={profile.age}
-                  onChange={(e) => setProfile({ ...profile, age: parseInt(e.target.value) || 0 })}
-                  placeholder="25"
-                />
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="age">Age</Label>
+                  <Input
+                    id="age"
+                    type="number"
+                    value={profile.age}
+                    onChange={(e) => setProfile({ ...profile, age: parseInt(e.target.value) || 0 })}
+                    placeholder="25"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="gender">Gender</Label>
+                  <Select value={profile.gender} onValueChange={(value: any) => setProfile({ ...profile, gender: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="gender">Gender</Label>
-                <Select value={profile.gender} onValueChange={(value: any) => setProfile({ ...profile, gender: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="weight">Weight (kg)</Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  value={profile.weight}
-                  onChange={(e) => setProfile({ ...profile, weight: parseInt(e.target.value) || 0 })}
-                  placeholder="70"
-                />
-              </div>
-              <div>
-                <Label htmlFor="height">Height (cm)</Label>
-                <Input
-                  id="height"
-                  type="number"
-                  value={profile.height}
-                  onChange={(e) => setProfile({ ...profile, height: parseInt(e.target.value) || 0 })}
-                  placeholder="170"
-                />
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="weight">Weight (kg)</Label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    value={profile.weight}
+                    onChange={(e) => setProfile({ ...profile, weight: parseInt(e.target.value) || 0 })}
+                    placeholder="70"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="height">Height (cm)</Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    value={profile.height}
+                    onChange={(e) => setProfile({ ...profile, height: parseInt(e.target.value) || 0 })}
+                    placeholder="170"
+                  />
+                </div>
               </div>
             </div>
 
@@ -184,37 +179,35 @@ export default function Settings() {
               Set your daily nutritional targets
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+          <CardContent className="space-y-6">
+            <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Calculator className="w-8 h-8 text-green-600" />
+                <div>
+                  <p className="font-medium text-green-800">Recommended Calories</p>
+                  <p className="text-sm text-green-600">Based on your profile: {calculateRecommendedCalories()} kcal</p>
+                </div>
+              </div>
+              <Button
+                onClick={updateRecommendedGoals}
+                variant="outline"
+                className="border-green-200 text-green-600 hover:bg-green-100"
+              >
+                Use Recommended
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <p className="text-sm font-medium text-green-800">Recommended Calories</p>
-                <p className="text-xs text-green-600">Based on your profile</p>
+                <Label htmlFor="calories">Daily Calories</Label>
+                <Input
+                  id="calories"
+                  type="number"
+                  value={goals.dailyCalories}
+                  onChange={(e) => setGoals({ ...goals, dailyCalories: parseInt(e.target.value) || 0 })}
+                  placeholder="2000"
+                />
               </div>
-              <div className="text-right">
-                <p className="text-lg font-bold text-green-800">{calculateRecommendedCalories()}</p>
-                <Button
-                  onClick={updateRecommendedGoals}
-                  size="sm"
-                  variant="outline"
-                  className="text-xs mt-1 border-green-200 text-green-600 hover:border-green-300"
-                >
-                  Use Recommended
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="calories">Daily Calories</Label>
-              <Input
-                id="calories"
-                type="number"
-                value={goals.dailyCalories}
-                onChange={(e) => setGoals({ ...goals, dailyCalories: parseInt(e.target.value) || 0 })}
-                placeholder="2000"
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="protein">Protein (g)</Label>
                 <Input
@@ -226,7 +219,7 @@ export default function Settings() {
                 />
               </div>
               <div>
-                <Label htmlFor="carbs">Carbs (g)</Label>
+                <Label htmlFor="carbs">Carbohydrates (g)</Label>
                 <Input
                   id="carbs"
                   type="number"
@@ -286,39 +279,53 @@ export default function Settings() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3 text-sm text-gray-600">
-              <p>
-                <strong className="text-gray-900">Your Privacy Matters:</strong> Nutrition Snap uses Firebase Anonymous Authentication to protect your identity. No personal information like email or phone number is required.
-              </p>
-              <p>
-                <strong className="text-gray-900">Data Security:</strong> All your meal data and photos are stored securely in Firebase with industry-standard encryption.
-              </p>
-              <p>
-                <strong className="text-gray-900">AI Processing:</strong> In future updates, meal analysis will happen directly on your device, ensuring your food photos never leave your phone.
-              </p>
-              <p>
-                <strong className="text-gray-900">Data Control:</strong> Your data belongs to you. You can delete your account and all associated data at any time.
-              </p>
+            <div className="space-y-4 text-sm text-gray-600">
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-medium text-blue-800 mb-2">🔒 Your Privacy Matters</h4>
+                <p className="text-blue-700">
+                  Nutrition Snap uses Firebase Anonymous Authentication to protect your identity. No personal information like email or phone number is required.
+                </p>
+              </div>
+              <div className="p-4 bg-green-50 rounded-lg">
+                <h4 className="font-medium text-green-800 mb-2">🛡️ Data Security</h4>
+                <p className="text-green-700">
+                  All your meal data and photos are stored securely in Firebase with industry-standard encryption.
+                </p>
+              </div>
+              <div className="p-4 bg-purple-50 rounded-lg">
+                <h4 className="font-medium text-purple-800 mb-2">🤖 AI Processing</h4>
+                <p className="text-purple-700">
+                  In future updates, meal analysis will happen directly on your device, ensuring your food photos never leave your phone.
+                </p>
+              </div>
+              <div className="p-4 bg-orange-50 rounded-lg">
+                <h4 className="font-medium text-orange-800 mb-2">📊 Data Control</h4>
+                <p className="text-orange-700">
+                  Your data belongs to you. You can delete your account and all associated data at any time.
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Save Button */}
-        <Button
-          onClick={handleSave}
-          disabled={loading}
-          className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-xl"
-        >
-          {loading ? (
-            <div className="flex items-center space-x-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              <span>Saving...</span>
-            </div>
-          ) : (
-            'Save Settings'
-          )}
-        </Button>
+        <div className="flex justify-end">
+          <Button
+            onClick={handleSave}
+            disabled={loading}
+            className="bg-green-600 hover:bg-green-700 px-8"
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Saving...
+              </>
+            ) : (
+              'Save Settings'
+            )}
+          </Button>
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

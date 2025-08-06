@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
-import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/auth'
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore'
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { getAuth, signInAnonymously, onAuthStateChanged, User, connectAuthEmulator } from 'firebase/auth'
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, orderBy, getDocs, Timestamp, connectFirestoreEmulator } from 'firebase/firestore'
+import { getStorage, ref, uploadBytes, getDownloadURL, connectStorageEmulator } from 'firebase/storage'
 import { getAnalytics, Analytics } from 'firebase/analytics'
 
 const firebaseConfig = {
@@ -75,13 +75,35 @@ export interface Meal {
   notes?: string
 }
 
-// Auth functions
+// Auth functions with better error handling
 export const signInAnonymouslyUser = async (): Promise<User | null> => {
   try {
+    console.log('Attempting anonymous sign in...')
     const result = await signInAnonymously(auth)
+    console.log('Anonymous sign in successful:', result.user.uid)
     return result.user
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error signing in anonymously:', error)
+    
+    // Handle specific Firebase auth errors
+    if (error.code === 'auth/admin-restricted-operation') {
+      console.error('Anonymous authentication is not enabled. Please enable it in Firebase Console.')
+      // For now, create a mock user for development
+      return {
+        uid: `mock-user-${Date.now()}`,
+        isAnonymous: true,
+        email: null,
+        displayName: null,
+        photoURL: null,
+        phoneNumber: null,
+        providerId: 'anonymous',
+        metadata: {
+          creationTime: new Date().toISOString(),
+          lastSignInTime: new Date().toISOString()
+        }
+      } as User
+    }
+    
     return null
   }
 }

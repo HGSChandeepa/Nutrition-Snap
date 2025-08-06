@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/hooks/use-auth'
-import Navigation from '@/components/navigation'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -12,7 +11,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   themeColor: '#4CAF50',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -31,10 +30,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <AuthProvider>
-          <main className="min-h-screen bg-gray-50">
-            {children}
-          </main>
-          <Navigation />
+          {children}
         </AuthProvider>
       </body>
     </html>
