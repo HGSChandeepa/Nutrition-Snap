@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI("AIzaSyCHFpqWcY0byc6LbcAI5rU1_DznXWiDJCc");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(request: NextRequest) {
   try {
     const { meals, userProfile, userGoals } = await request.json();
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemma-3-27b-it" });
 
     // Analyze user's meal data and generate comprehensive health report
     const analysisPrompt = `

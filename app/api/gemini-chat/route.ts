@@ -1,13 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 
-const genAI = new GoogleGenerativeAI("AIzaSyCHFpqWcY0byc6LbcAI5rU1_DznXWiDJCc");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(request: NextRequest) {
   try {
     const { message, imageData, userContext } = await request.json();
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemma-3-27b-it" });
 
     // Create context-aware prompt for nutrition and meal guidance
     const systemPrompt = `You are a nutrition expert specializing in Sri Lankan cuisine. You help users with:

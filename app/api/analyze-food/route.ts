@@ -20,9 +20,8 @@ export async function POST(request: Request) {
     const base64Image = buffer.toString("base64");
     const mimeType = imageResponse.headers.get("content-type") || "image/jpeg";
 
-    const GEMINI_API_KEY =
-      process.env.GEMINI_API_KEY || "AIzaSyCHFpqWcY0byc6LbcAI5rU1_DznXWiDJCc";
-    const MODEL_ID = "gemini-2.0-flash";
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
+    const MODEL_ID = "gemma-3-27b-it";
     const GENERATE_CONTENT_API = "streamGenerateContent";
 
     const nutritionSchema = `
