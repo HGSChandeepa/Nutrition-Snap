@@ -2,19 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Home,
-  TrendingUp,
-  Settings,
-  Plus,
-  Camera,
-  BarChart3,
-  User,
-  Target,
-  Calendar,
-  Activity,
-  Utensils,
-} from "lucide-react";
+import { Home, TrendingUp, Settings, Plus, Camera, BarChart3, User, Target, Calendar, Activity, Utensils, MessageCircle, AlertTriangle } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -35,6 +23,18 @@ export default function DashboardSidebar() {
       icon: Plus,
       label: "Log Meal",
       description: "Add new meal entry",
+    },
+    {
+      href: "/chat",
+      icon: MessageCircle,
+      label: "Nutrition Chat",
+      description: "AI nutrition assistant",
+    },
+    {
+      href: "/alerts",
+      icon: AlertTriangle,
+      label: "Health Alerts",
+      description: "Health analysis & reports",
     },
     {
       href: "/progress",
