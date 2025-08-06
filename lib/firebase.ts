@@ -72,6 +72,17 @@ export interface FoodItem {
   fats?: number;
 }
 
+export interface AIInsights {
+  keyVitamins?: string[];
+  keyMinerals?: string[];
+  ingredientsGuess?: string[];
+  healthTips?: string[];
+  disclaimer?: string;
+  sugar?: number;
+  fiber?: number;
+  sodium?: number;
+}
+
 export interface Meal {
   id?: string;
   uid: string;
