@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { analyzeImage, saveMeal, FoodItem, Timestamp } from "@/lib/firebase";
@@ -37,7 +37,7 @@ import React from "react";
 import { AIAnalysisResult } from "@/components/ai-analysis-result";
 import { AIInsightsDisplay } from "@/components/ai-insights-display";
 
-export default function LogMeal() {
+function LogMealContent() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -639,5 +639,21 @@ export default function LogMeal() {
         )}
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function LogMeal() {
+  return (
+    <Suspense
+      fallback={
+        <DashboardLayout title="Log New Meal" subtitle="Loading...">
+          <div className="max-w-4xl mx-auto p-8 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          </div>
+        </DashboardLayout>
+      }
+    >
+      <LogMealContent />
+    </Suspense>
   );
 }

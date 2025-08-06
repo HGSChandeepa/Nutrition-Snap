@@ -1,12 +1,5 @@
 import { NextResponse } from "next/server";
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-  maxDuration: 60, // Increase timeout (in seconds)
-};
-
 export async function POST(request: Request) {
   try {
     const { imageUrl } = await request.json();
