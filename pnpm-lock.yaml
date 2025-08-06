@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@google/generative-ai':
-        specifier: latest
+        specifier: ^0.24.1
         version: 0.24.1
       '@hookform/resolvers':
         specifier: ^3.9.1
